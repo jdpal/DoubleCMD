@@ -1,6 +1,8 @@
 #!/bin/bash
 
-# The new package will be saved here
+# The new package will be saved here.
+# This version was designed by Jatin Durgapal <durgapal@gmail.com>
+# and is based on the open-source version of Double Commander.
 PACK_DIR=$PWD/my-explorer-release
 
 # Temp dir for creating *.dmg package

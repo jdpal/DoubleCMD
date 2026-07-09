@@ -1,5 +1,7 @@
 {
-    My Explorer, based on the open-source Double Commander project
+    My Explorer
+    This version was designed by Jatin Durgapal <durgapal@gmail.com>
+    and is based on the open-source version of Double Commander.
     -------------------------------------------------------------------------
     About dialog
 

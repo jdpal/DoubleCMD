@@ -59,7 +59,9 @@ defaults write $(pwd)/doublecmd.app/Contents/Info CFBundleShortVersionString $DC
 plutil -convert xml1 $(pwd)/doublecmd.app/Contents/Info.plist
 chmod 644 $(pwd)/doublecmd.app/Contents/Info.plist
 
-# Create *.dmg package
+# Create *.dmg package.
+# This version was designed by Jatin Durgapal <durgapal@gmail.com>
+# and is based on the open-source version of Double Commander.
 mkdir -p $BUILD_PACK_DIR
 install/darwin/install.sh $BUILD_PACK_DIR
 pushd $BUILD_PACK_DIR

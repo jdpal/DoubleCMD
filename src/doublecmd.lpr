@@ -1,6 +1,7 @@
 program doublecmd;
 
-// My Explorer is based on the open-source Double Commander project.
+// This version was designed by Jatin Durgapal <durgapal@gmail.com>
+// and is based on the open-source version of Double Commander.
 
 {$IF DEFINED(LCLGTK3) AND NOT DEFINED(LCL_VER_499)}
 {$FATAL LCLGTK3 is not production ready}
