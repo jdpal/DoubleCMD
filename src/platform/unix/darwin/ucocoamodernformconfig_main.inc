@@ -810,13 +810,13 @@ const
     isMainForm: False;
 
     titleBar: (
-      transparent: False;
-      separatorStyle: NSTitlebarSeparatorStyleAutomatic;
+      transparent: True;
+      separatorStyle: NSTitlebarSeparatorStyleNone;
     );
 
     toolBar: (
       identifier: 'MainForm.ToolBar';
-      style: NSWindowToolbarStyleAutomatic;
+      style: NSWindowToolbarStyleUnifiedCompact;
       displayMode: NSToolbarDisplayModeIconOnly;
       autoHideInFullScreen: False;
 
@@ -826,12 +826,16 @@ const
       items: (
       );
       defaultItemsIdentifiers: (
+        'MainForm.GoBackward',
+        'MainForm.GoForward',
+        'MainForm.Refresh',
+        'MainForm.Search',
+        'MainForm.Go',
+        'NSToolbarFlexibleSpaceItem',
+
         'MainForm.TreeView',
         'MainForm.HorzSplit',
         'MainForm.SwapPanels',
-
-        'MainForm.GoBackward',
-        'MainForm.GoForward',
         'NSToolbarFlexibleSpaceItem',
 
         'MainForm.iCloud',
@@ -840,21 +844,20 @@ const
         'NSToolbarFlexibleSpaceItem',
 
         'MainForm.ShowMode',
-        'NSToolbarFlexibleSpaceItem',
-
-        'MainForm.Share',
-        'MainForm.AirDrop',
+        'MainForm.Compare',
+        'MainForm.Sync',
+        'MainForm.Edit',
         'NSToolbarFlexibleSpaceItem',
 
         'MainForm.QuickLook',
-        'MainForm.Tag',
-        'MainForm.Go',
-        'MainForm.FinderReveal',
-        'MainForm.FinderInfo',
-        'NSToolbarFlexibleSpaceItem',
+        'MainForm.Share',
+        'MainForm.AirDrop',
         'MainForm.Command',
         'NSToolbarFlexibleSpaceItem',
-        'MainForm.Search',
+
+        'MainForm.Tag',
+        'MainForm.FinderReveal',
+        'MainForm.FinderInfo',
         'MainForm.Terminal',
         'MainForm.Privilege'
       );
@@ -985,4 +988,3 @@ begin
     TCocoaToolBarUtils.toClass(networkItemConfig)
   ];
 end;
-

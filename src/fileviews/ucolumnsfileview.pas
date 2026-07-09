@@ -114,6 +114,9 @@ type
 
     procedure SetRowCount(Count: Integer);
     procedure SetFilesDisplayItems;
+    {$IFDEF DARWIN}
+    procedure UpdateMacDynamicRowHeights;
+    {$ENDIF}
     procedure SetColumns;
 
     procedure MakeVisible(iRow: Integer);
@@ -228,7 +231,8 @@ uses
   uKeyboard,
   uFileFunctions,
   uFileViewNotebook,
-  fOptionsCustomColumns;
+  fOptionsCustomColumns,
+  LazUTF8;
 
 const
   CELL_PADDING = 2;
@@ -448,6 +452,9 @@ begin
   // Workaround: https://doublecmd.sourceforge.io/mantisbt/view.php?id=1992
   if dgPanel.Flat then dgPanel.Invalidate;
 {$ENDIF}
+{$IFDEF DARWIN}
+  UpdateMacDynamicRowHeights;
+{$ENDIF}
   Notify([fvnVisibleFilePropertiesChanged]);
 end;
 
@@ -618,6 +625,102 @@ begin
   for i := 0 to FFiles.Count - 1 do
     FFiles[i].DisplayItem := Pointer(i + dgPanel.FixedRows);
 end;
+
+{$IFDEF DARWIN}
+procedure TColumnsFileView.UpdateMacDynamicRowHeights;
+const
+  MAX_NAME_LINES = 3;
+  MAC_ROW_PADDING = 4;
+var
+  I, RowIndex, NameColumn, NameWidth, LineHeight, LineCount, RowHeight: Integer;
+  OldFont: TFont;
+
+  function CountWrappedLines(const AText: String; ATargetWidth: Integer): Integer;
+  var
+    Remaining, Candidate: String;
+    Lo, Hi, Mid, Fit, Len: Integer;
+  begin
+    Result := 1;
+    if (AText = EmptyStr) or (ATargetWidth <= 0) then
+      Exit;
+
+    Remaining := AText;
+    while (Result < MAX_NAME_LINES) and
+          (dgPanel.Canvas.TextWidth(Remaining) > ATargetWidth) do
+    begin
+      Len := UTF8Length(Remaining);
+      Lo := 1;
+      Hi := Len;
+      Fit := 1;
+
+      while Lo <= Hi do
+      begin
+        Mid := (Lo + Hi) div 2;
+        Candidate := UTF8Copy(Remaining, 1, Mid);
+        if dgPanel.Canvas.TextWidth(Candidate) <= ATargetWidth then
+        begin
+          Fit := Mid;
+          Lo := Mid + 1;
+        end
+        else
+          Hi := Mid - 1;
+      end;
+
+      if Fit >= Len then
+        Break;
+
+      Remaining := UTF8Copy(Remaining, Fit + 1, MaxInt);
+      Inc(Result);
+    end;
+  end;
+
+begin
+  if (dgPanel = nil) or (FFiles = nil) or (FFiles.Count = 0) then
+    Exit;
+
+  NameColumn := FFileNameColumn;
+  if NameColumn < 0 then
+    NameColumn := 0;
+  if NameColumn >= dgPanel.ColCount then
+    Exit;
+
+  NameWidth := dgPanel.ColWidths[NameColumn] - 2 * CELL_PADDING;
+  if (NameColumn = 0) and (gShowIcons <> sim_none) then
+    Dec(NameWidth, gIconsSize + 2);
+
+  OldFont := TFont.Create;
+  try
+    OldFont.Assign(dgPanel.Canvas.Font);
+    FontOptionsToFont(gFonts[dcfMain], dgPanel.Canvas.Font);
+    LineHeight := dgPanel.Canvas.TextHeight('Wg');
+
+    for I := 0 to FFiles.Count - 1 do
+    begin
+      RowIndex := I + dgPanel.FixedRows;
+      if RowIndex >= dgPanel.RowCount then
+        Break;
+
+      if FFiles[I].DisplayStrings.Count = 0 then
+        MakeColumnsStrings(FFiles[I]);
+
+      if NameColumn < FFiles[I].DisplayStrings.Count then
+        LineCount := CountWrappedLines(FFiles[I].DisplayStrings[NameColumn], NameWidth)
+      else
+        LineCount := 1;
+
+      RowHeight := Max(dgPanel.DefaultRowHeight,
+                       LineHeight * LineCount + MAC_ROW_PADDING);
+      if I = FFiles.Count - 1 then
+        Inc(RowHeight, CELL_PADDING);
+
+      dgPanel.RowHeights[RowIndex] := RowHeight;
+    end;
+  finally
+    dgPanel.Canvas.Font.Assign(OldFont);
+    OldFont.Free;
+  end;
+end;
+{$ENDIF}
 
 function TColumnsFileView.GetFilePropertiesNeeded: TFilePropertiesTypes;
 var
@@ -1037,6 +1140,9 @@ begin
   dgPanel.BeginUpdate;
   SetRowCount(FFiles.Count);  // Update grid row count.
   SetFilesDisplayItems;
+  {$IFDEF DARWIN}
+  UpdateMacDynamicRowHeights;
+  {$ENDIF}
   RedrawFiles;
   dgPanel.EndUpdate;
 
@@ -1068,6 +1174,9 @@ procedure TColumnsFileView.DoColumnResized(Sender: TObject;
         if ColumnsView.ActiveColm = ActiveColm then
         begin
           ColumnsView.dgPanel.ColWidths[ColumnIndex]:= ColumnNewSize;
+          {$IFDEF DARWIN}
+          ColumnsView.UpdateMacDynamicRowHeights;
+          {$ENDIF}
         end;
       end;
     end;
@@ -1564,6 +1673,11 @@ var
   //------------------------------------------------------
   var
     targetWidth: Integer;
+    {$IFDEF DARWIN}
+    TextLeft: Integer;
+    TextRect: TRect;
+    TextStyle: TTextStyle;
+    {$ENDIF}
   begin
     if (gShowIcons <> sim_none) then
     begin
@@ -1599,12 +1713,37 @@ var
 
     s := AFile.DisplayStrings.Strings[ACol];
 
-    if gCutTextToColWidth then
+    if gCutTextToColWidth
+       {$IFDEF DARWIN}
+       and (aCol <> ColumnsView.FFileNameColumn)
+       {$ENDIF}
+    then
     begin
       targetWidth:= (aRect.Width) - 2*CELL_PADDING;
       if (gShowIcons <> sim_none) then targetWidth:= targetWidth - gIconsSize - 2;
       s:= FitFileName(s, Canvas, AFile.FSFile, targetWidth);
     end;
+
+    {$IFDEF DARWIN}
+    if aCol = ColumnsView.FFileNameColumn then
+    begin
+      if (gShowIcons <> sim_none) then
+        TextLeft := aRect.Left + CELL_PADDING + gIconsSize + 2
+      else
+        TextLeft := aRect.Left + CELL_PADDING;
+
+      TextRect := Rect(TextLeft, aRect.Top + 2, aRect.Right - CELL_PADDING, aRect.Bottom - 2);
+      TextStyle := Canvas.TextStyle;
+      TextStyle.Alignment := taLeftJustify;
+      TextStyle.Layout := tlTop;
+      TextStyle.SingleLine := False;
+      TextStyle.Wordbreak := True;
+      TextStyle.EndEllipsis := True;
+      TextStyle.Opaque := False;
+      Canvas.TextRect(TextRect, TextRect.Left, TextRect.Top, s, TextStyle);
+      Exit;
+    end;
+    {$ENDIF}
 
     if (gShowIcons <> sim_none) then
       Canvas.TextOut(aRect.Left + CELL_PADDING + gIconsSize + 2, iTextTop, s)
@@ -2391,4 +2530,3 @@ begin
 end;
 
 end.
-
