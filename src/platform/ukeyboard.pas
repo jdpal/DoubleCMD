@@ -479,7 +479,7 @@ begin
   if IsKeyDown(VK_LWIN) or IsKeyDown(VK_RWIN) then
     Include(Result, ssMeta);
 
-{$IF DEFINED(DARWIN)}
+{$IF DEFINED(DARWIN) and DECLARED(VK_FN)}
   if IsKeyDown(VK_FN) then
     Include(Result, ssAltGr);
 {$ENDIF}
@@ -1293,4 +1293,3 @@ finalization
 {$ENDIF}
 
 end.
-

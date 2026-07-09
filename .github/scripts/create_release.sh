@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 # The new package will be saved here.
 # This version was designed by Jatin Durgapal <durgapal@gmail.com>
@@ -68,7 +69,7 @@ build_doublecmd()
   echo Killing XProtect...; sudo pkill -9 XProtect >/dev/null || true;
   echo Waiting for XProtect process...; while pgrep XProtect; do sleep 3; done;
 
-  install/darwin/create-dmg/create-dmg \
+  if install/darwin/create-dmg/create-dmg \
     --volname "My Explorer" \
     --volicon "$BUILD_PACK_DIR/.VolumeIcon.icns" \
     --background "$BUILD_PACK_DIR/.background/bg.jpg" \
@@ -82,8 +83,7 @@ build_doublecmd()
     --icon ".background" 100 500 \
     "$PACK_DIR/my-explorer-$DC_VER.$lcl.$CPU_TARGET.dmg" \
     "$BUILD_PACK_DIR/"
-
-  if [ $? -eq 0 ]; then
+  then
     break
   fi
 
@@ -92,6 +92,8 @@ build_doublecmd()
   sleep 10
 
   done
+
+  test -f "$PACK_DIR/my-explorer-$DC_VER.$lcl.$CPU_TARGET.dmg"
 
   # Clean DC build dir
   ./clean.sh

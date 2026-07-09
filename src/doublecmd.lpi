@@ -37,7 +37,7 @@
       <UseVersionInfo Value="True"/>
       <MajorVersionNr Value="1"/>
       <MinorVersionNr Value="3"/>
-      <RevisionNr Value="2"/>
+      <RevisionNr Value="3"/>
       <Attributes pvaPreRelease="True" pvaPrivateBuild="True"/>
       <StringTable FileDescription="My Explorer" InternalName="MYEXPLORER" LegalCopyright="Based on open-source Double Commander. Copyright (C) 2006-2026 Alexander Koblov" ProductName="My Explorer"/>
     </VersionInfo>
