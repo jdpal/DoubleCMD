@@ -14,10 +14,10 @@ build_native_dmg()
   local build_pack_dir=/var/tmp/my-explorer-$DC_VER-$cpu_target
   local app_dir="$build_pack_dir/My Explorer.app"
   local dmg_path="$PACK_DIR/my-explorer-$DC_VER.native.$cpu_target.dmg"
-  local create_dmg_options=()
+  local create_dmg_option=
 
   if [ "${GITHUB_ACTIONS:-}" != "true" ]; then
-    create_dmg_options+=(--skip-jenkins)
+    create_dmg_option=--skip-jenkins
   fi
 
   rm -rf "$build_pack_dir"
@@ -45,7 +45,7 @@ build_native_dmg()
     fi
 
     if install/darwin/create-dmg/create-dmg \
-      "${create_dmg_options[@]}" \
+      $create_dmg_option \
       --volname "My Explorer" \
       --volicon "$build_pack_dir/.VolumeIcon.icns" \
       --background "$build_pack_dir/.background/bg.jpg" \
