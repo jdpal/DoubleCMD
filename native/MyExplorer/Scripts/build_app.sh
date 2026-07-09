@@ -18,6 +18,7 @@ mkdir -p "$APP_DIR/Contents/MacOS" "$APP_DIR/Contents/Resources"
 
 cp "$EXECUTABLE" "$APP_DIR/Contents/MacOS/MyExplorer"
 cp "$PROJECT_DIR/Resources/MyExplorer.icns" "$APP_DIR/Contents/Resources/MyExplorer.icns"
+cp "$PROJECT_DIR/Resources/browser-style-dual-pane.html" "$APP_DIR/Contents/Resources/browser-style-dual-pane.html"
 
 cat > "$APP_DIR/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>

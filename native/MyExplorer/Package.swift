@@ -15,12 +15,14 @@ let package = Package(
             name: "MyExplorer",
             path: "Sources/MyExplorer",
             resources: [
-                .copy("../../Resources/MyExplorer.icns")
+                .copy("../../Resources/MyExplorer.icns"),
+                .copy("../../Resources/browser-style-dual-pane.html")
             ],
             linkerSettings: [
                 .linkedFramework("AppKit"),
                 .linkedFramework("QuickLook"),
-                .linkedFramework("UniformTypeIdentifiers")
+                .linkedFramework("UniformTypeIdentifiers"),
+                .linkedFramework("WebKit")
             ]
         )
     ]
