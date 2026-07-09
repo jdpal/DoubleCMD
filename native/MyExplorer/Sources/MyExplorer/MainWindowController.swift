@@ -1,18 +1,32 @@
 import AppKit
 import WebKit
 
+final class MyExplorerWebView: WKWebView {
+    override func mouseDown(with event: NSEvent) {
+        let location = convert(event.locationInWindow, from: nil)
+        if bounds.height - location.y <= 38 {
+            window?.performDrag(with: event)
+            return
+        }
+        super.mouseDown(with: event)
+    }
+}
+
 final class MainWindowController: NSWindowController {
     private let webView: WKWebView
     private let fileManager = FileManager.default
     private var leftDirectory = FileManager.default.homeDirectoryForCurrentUser
     private var rightDirectory = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Downloads", isDirectory: true)
     private var activePane = "left"
+    private var leftSearchQuery = ""
+    private var rightSearchQuery = ""
+    private let customFavoritesKey = "MyExplorer.CustomFavorites"
 
     init() {
         let configuration = WKWebViewConfiguration()
         let contentController = WKUserContentController()
         configuration.userContentController = contentController
-        webView = WKWebView(frame: .zero, configuration: configuration)
+        webView = MyExplorerWebView(frame: .zero, configuration: configuration)
 
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 1440, height: 900),
@@ -105,8 +119,8 @@ final class MainWindowController: NSWindowController {
             activePane: activePane,
             addressPath: directory(for: activePane).path,
             favorites: favorites(),
-            left: paneState(id: "left", title: "Left Pane", directory: leftDirectory, tabs: ["src", "docs"]),
-            right: paneState(id: "right", title: "Right Pane", directory: rightDirectory, tabs: ["mockups", "build"])
+            left: paneState(id: "left", title: "Left Pane", directory: leftDirectory, tabs: ["src", "docs"], searchQuery: leftSearchQuery),
+            right: paneState(id: "right", title: "Right Pane", directory: rightDirectory, tabs: ["mockups", "build"], searchQuery: rightSearchQuery)
         )
 
         do {
@@ -118,15 +132,24 @@ final class MainWindowController: NSWindowController {
         }
     }
 
-    private func paneState(id: String, title: String, directory: URL, tabs: [String]) -> PaneState {
-        let urls = list(directory)
-        let parent = FileEntry.parentEntry(for: directory)
-        let entries = ([parent].compactMap { $0 } + urls.map { FileEntry(url: $0) }).map(entryState)
+    private func paneState(id: String, title: String, directory: URL, tabs: [String], searchQuery: String) -> PaneState {
+        let entries: [EntryState]
+        if searchQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            let urls = list(directory)
+            let parent = FileEntry.parentEntry(for: directory)
+            entries = ([parent].compactMap { $0 } + urls.map { FileEntry(url: $0) }).map { entryState($0) }
+        } else {
+            entries = recursiveSearch(in: directory, query: searchQuery).map { url in
+                let relativeName = relativePath(for: url, under: directory)
+                return entryState(FileEntry(url: url), displayName: relativeName)
+            }
+        }
         return PaneState(
             id: id,
             title: title,
             tabNames: tabs,
             path: directory.path,
+            searchQuery: searchQuery,
             entries: entries
         )
     }
@@ -151,9 +174,47 @@ final class MainWindowController: NSWindowController {
             }
     }
 
-    private func entryState(_ entry: FileEntry) -> EntryState {
+    private func recursiveSearch(in directory: URL, query: String) -> [URL] {
+        let normalized = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !normalized.isEmpty else { return [] }
+
+        let keys: [URLResourceKey] = [.isDirectoryKey, .fileSizeKey, .contentModificationDateKey, .contentTypeKey, .isHiddenKey]
+        let enumerator = fileManager.enumerator(
+            at: directory,
+            includingPropertiesForKeys: keys,
+            options: [.skipsHiddenFiles],
+            errorHandler: { _, _ in true }
+        )
+
+        var matches: [URL] = []
+        while let url = enumerator?.nextObject() as? URL {
+            if url.lastPathComponent.localizedCaseInsensitiveContains(normalized) {
+                matches.append(url)
+            }
+        }
+
+        return matches.sorted { lhs, rhs in
+            let left = FileEntry(url: lhs)
+            let right = FileEntry(url: rhs)
+            if left.isDirectory != right.isDirectory {
+                return left.isDirectory
+            }
+            return relativePath(for: lhs, under: directory).localizedStandardCompare(relativePath(for: rhs, under: directory)) == .orderedAscending
+        }
+    }
+
+    private func relativePath(for url: URL, under directory: URL) -> String {
+        let base = directory.standardizedFileURL.path
+        let path = url.standardizedFileURL.path
+        guard path.hasPrefix(base) else { return path }
+        let startIndex = path.index(path.startIndex, offsetBy: base.count)
+        let relative = path[startIndex...].trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        return relative.isEmpty ? url.lastPathComponent : String(relative)
+    }
+
+    private func entryState(_ entry: FileEntry, displayName: String? = nil) -> EntryState {
         EntryState(
-            name: entry.name,
+            name: displayName ?? entry.name,
             path: entry.url.path,
             isDirectory: entry.isDirectory,
             size: sizeText(for: entry),
@@ -209,8 +270,8 @@ final class MainWindowController: NSWindowController {
             FavoriteState(title: "Documents", symbol: "i-file", style: "documents", path: home.appendingPathComponent("Documents", isDirectory: true).path),
             FavoriteState(title: "Projects", symbol: "i-folder", style: "projects", path: home.appendingPathComponent("Downloads/Development", isDirectory: true).path),
             FavoriteState(title: "iCloud Drive", symbol: "i-cloud", style: "cloud", path: home.appendingPathComponent("Library/Mobile Documents/com~apple~CloudDocs", isDirectory: true).path),
-            FavoriteState(title: "Network", symbol: "i-network", style: "network", path: "/Network")
-        ]
+            FavoriteState(title: "Network", symbol: "i-network", style: "network", path: networkDirectory().path)
+        ] + customFavorites()
     }
 
     private func directory(for pane: String) -> URL {
@@ -226,20 +287,22 @@ final class MainWindowController: NSWindowController {
 
         if pane == "right" {
             rightDirectory = url.standardizedFileURL
+            rightSearchQuery = ""
         } else {
             leftDirectory = url.standardizedFileURL
+            leftSearchQuery = ""
         }
         activePane = pane
         sendState()
     }
 
-    private func handle(_ action: String, pane: String, path: String?) {
+    private func handle(_ action: String, pane: String, path: String?, command: String? = nil) {
         activePane = pane
         let selected = path.map { URL(fileURLWithPath: $0) }
 
         switch action {
         case "select":
-            sendState()
+            return
         case "open", "openSelected":
             guard let selected else { return }
             let entry = FileEntry(url: selected)
@@ -248,15 +311,39 @@ final class MainWindowController: NSWindowController {
             } else {
                 NSWorkspace.shared.open(selected)
             }
+        case "edit":
+            guard let selected else { return }
+            edit(selected, pane: pane)
         case "favorite":
             guard let selected else { return }
             setDirectory(selected, for: pane)
+        case "addFavorite":
+            addFavorite(directory(for: activePane))
+        case "searchPane":
+            setSearchQuery(command ?? "", for: pane)
         case "parent":
             setDirectory(directory(for: pane).deletingLastPathComponent(), for: pane)
         case "home":
             setDirectory(fileManager.homeDirectoryForCurrentUser, for: pane)
         case "refresh":
             sendState()
+        case "disk":
+            setDirectory(URL(fileURLWithPath: "/", isDirectory: true), for: pane)
+        case "network":
+            setDirectory(networkDirectory(), for: pane)
+        case "favorites":
+            setDirectory(fileManager.homeDirectoryForCurrentUser, for: pane)
+        case "tools", "more":
+            showTools()
+        case "search":
+            showSearch()
+        case "terminal":
+            openTerminal(command: command)
+        case "mkdir":
+            makeDirectory(in: pane)
+        case "rename":
+            guard let selected else { return }
+            rename(selected, pane: pane)
         case "copy", "move":
             guard let selected else { return }
             let targetDirectory = directory(for: pane == "right" ? "left" : "right")
@@ -285,6 +372,248 @@ final class MainWindowController: NSWindowController {
         }
     }
 
+    private func edit(_ url: URL, pane: String) {
+        let entry = FileEntry(url: url)
+        if entry.isDirectory {
+            setDirectory(url, for: pane)
+            return
+        }
+
+        if let textEdit = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.apple.TextEdit") {
+            let configuration = NSWorkspace.OpenConfiguration()
+            NSWorkspace.shared.open([url], withApplicationAt: textEdit, configuration: configuration)
+        } else {
+            NSWorkspace.shared.open(url)
+        }
+    }
+
+    private func networkDirectory() -> URL {
+        let network = URL(fileURLWithPath: "/Network", isDirectory: true)
+        var isDirectory: ObjCBool = false
+        if fileManager.fileExists(atPath: network.path, isDirectory: &isDirectory), isDirectory.boolValue {
+            return network
+        }
+        return URL(fileURLWithPath: "/Volumes", isDirectory: true)
+    }
+
+    private func setSearchQuery(_ query: String, for pane: String) {
+        if pane == "right" {
+            rightSearchQuery = query
+        } else {
+            leftSearchQuery = query
+        }
+        sendState()
+    }
+
+    private func customFavorites() -> [FavoriteState] {
+        let paths = UserDefaults.standard.stringArray(forKey: customFavoritesKey) ?? []
+        return paths.compactMap { path in
+            let url = URL(fileURLWithPath: path, isDirectory: true)
+            var isDirectory: ObjCBool = false
+            guard fileManager.fileExists(atPath: path, isDirectory: &isDirectory), isDirectory.boolValue else { return nil }
+            let title = url.lastPathComponent.isEmpty ? url.path : url.lastPathComponent
+            return FavoriteState(title: title, symbol: "i-star", style: "custom", path: url.path)
+        }
+    }
+
+    private func addFavorite(_ url: URL) {
+        let path = url.standardizedFileURL.path
+        var paths = UserDefaults.standard.stringArray(forKey: customFavoritesKey) ?? []
+        guard !paths.contains(path) else {
+            NSSound.beep()
+            return
+        }
+        paths.append(path)
+        UserDefaults.standard.set(paths, forKey: customFavoritesKey)
+        sendState()
+    }
+
+    private func openTerminal(command: String?) {
+        let directory = directory(for: activePane).path
+        let trimmedCommand = command?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let cdCommand = "cd \(shellEscaped(directory))"
+        let terminalCommand = [cdCommand, trimmedCommand].compactMap { value in
+            guard let value, !value.isEmpty else { return nil }
+            return value
+        }.joined(separator: "; ")
+        let script = "tell application \"Terminal\" to do script \(appleScriptString(terminalCommand))"
+        var error: NSDictionary?
+        NSAppleScript(source: script)?.executeAndReturnError(&error)
+        if error != nil {
+            NSWorkspace.shared.open(URL(fileURLWithPath: "/System/Applications/Utilities/Terminal.app"))
+        }
+    }
+
+    private func shellEscaped(_ value: String) -> String {
+        "'" + value.replacingOccurrences(of: "'", with: "'\\''") + "'"
+    }
+
+    private func appleScriptString(_ value: String) -> String {
+        "\"" + value.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"") + "\""
+    }
+
+    private func makeDirectory(in pane: String) {
+        let alert = NSAlert()
+        alert.messageText = "New Folder"
+        alert.informativeText = "Create a folder in \(directory(for: pane).path)."
+        alert.addButton(withTitle: "Create")
+        alert.addButton(withTitle: "Cancel")
+
+        let input = NSTextField(frame: NSRect(x: 0, y: 0, width: 360, height: 24))
+        input.stringValue = "New Folder"
+        alert.accessoryView = input
+
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        let name = input.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !name.isEmpty else { return }
+
+        do {
+            try fileManager.createDirectory(at: directory(for: pane).appendingPathComponent(name), withIntermediateDirectories: false)
+            sendState()
+        } catch {
+            showError(error)
+        }
+    }
+
+    private func rename(_ url: URL, pane: String) {
+        guard url.lastPathComponent != ".." else { return }
+
+        let alert = NSAlert()
+        alert.messageText = "Rename"
+        alert.informativeText = "Enter a new name for \(url.lastPathComponent)."
+        alert.addButton(withTitle: "Rename")
+        alert.addButton(withTitle: "Cancel")
+
+        let input = NSTextField(frame: NSRect(x: 0, y: 0, width: 360, height: 24))
+        input.stringValue = url.lastPathComponent
+        alert.accessoryView = input
+
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        let name = input.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !name.isEmpty else { return }
+
+        do {
+            try fileManager.moveItem(at: url, to: url.deletingLastPathComponent().appendingPathComponent(name))
+            sendState()
+        } catch {
+            showError(error)
+        }
+    }
+
+    private func showSearch() {
+        let alert = NSAlert()
+        alert.messageText = "Search"
+        alert.informativeText = "Search in \(directory(for: activePane).path)."
+        alert.addButton(withTitle: "Search")
+        alert.addButton(withTitle: "Cancel")
+
+        let input = NSTextField(frame: NSRect(x: 0, y: 0, width: 420, height: 24))
+        input.placeholderString = "File or folder name"
+        alert.accessoryView = input
+
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        let query = input.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !query.isEmpty else { return }
+
+        showSearchResults(matching: query, in: directory(for: activePane))
+    }
+
+    private func showTools() {
+        let alert = NSAlert()
+        alert.messageText = "Commander Tools"
+        alert.informativeText = "Choose a tool for the current left and right panes."
+        alert.addButton(withTitle: "Compare Panes")
+        alert.addButton(withTitle: "Search Active Pane")
+        alert.addButton(withTitle: "Open Terminal")
+        alert.addButton(withTitle: "Cancel")
+
+        switch alert.runModal() {
+        case .alertFirstButtonReturn:
+            comparePanes()
+        case .alertSecondButtonReturn:
+            showSearch()
+        case .alertThirdButtonReturn:
+            openTerminal(command: nil)
+        default:
+            break
+        }
+    }
+
+    private func comparePanes() {
+        let leftEntries = list(leftDirectory).map { FileEntry(url: $0) }
+        let rightEntries = list(rightDirectory).map { FileEntry(url: $0) }
+        let leftByName = Dictionary(uniqueKeysWithValues: leftEntries.map { ($0.name, $0) })
+        let rightByName = Dictionary(uniqueKeysWithValues: rightEntries.map { ($0.name, $0) })
+        let leftNames = Set(leftByName.keys)
+        let rightNames = Set(rightByName.keys)
+        let leftOnly = leftNames.subtracting(rightNames).sorted()
+        let rightOnly = rightNames.subtracting(leftNames).sorted()
+        let changed = leftNames.intersection(rightNames).filter { name in
+            guard let left = leftByName[name], let right = rightByName[name] else { return false }
+            if left.isDirectory != right.isDirectory { return true }
+            if left.byteCount != right.byteCount { return true }
+            guard let leftDate = left.modifiedAt, let rightDate = right.modifiedAt else { return false }
+            return abs(leftDate.timeIntervalSince(rightDate)) > 1
+        }.sorted()
+
+        var lines = [
+            "Left: \(leftDirectory.path)",
+            "Right: \(rightDirectory.path)",
+            "",
+            "\(leftOnly.count) only on left",
+            "\(rightOnly.count) only on right",
+            "\(changed.count) changed in both"
+        ]
+
+        appendPreview(title: "Only on left", names: leftOnly, to: &lines)
+        appendPreview(title: "Only on right", names: rightOnly, to: &lines)
+        appendPreview(title: "Changed", names: changed, to: &lines)
+
+        let alert = NSAlert()
+        alert.messageText = "Compare Results"
+        alert.informativeText = lines.joined(separator: "\n")
+        alert.addButton(withTitle: "OK")
+        alert.runModal()
+    }
+
+    private func appendPreview(title: String, names: [String], to lines: inout [String]) {
+        guard !names.isEmpty else { return }
+        lines.append("")
+        lines.append("\(title):")
+        lines.append(contentsOf: names.prefix(8).map { "  \($0)" })
+        if names.count > 8 {
+            lines.append("  ... \(names.count - 8) more")
+        }
+    }
+
+    private func showSearchResults(matching query: String, in scope: URL) {
+        let enumerator = fileManager.enumerator(
+            at: scope,
+            includingPropertiesForKeys: [.isDirectoryKey],
+            options: [.skipsHiddenFiles, .skipsPackageDescendants]
+        )
+        var matches: [URL] = []
+
+        while let url = enumerator?.nextObject() as? URL {
+            if url.lastPathComponent.localizedCaseInsensitiveContains(query) {
+                matches.append(url)
+            }
+            if matches.count >= 50 { break }
+        }
+
+        let alert = NSAlert()
+        alert.messageText = "Search Results"
+        if matches.isEmpty {
+            alert.informativeText = "No matches for \"\(query)\" in \(scope.path)."
+        } else {
+            let resultLines = matches.prefix(30).map { $0.path }
+            let suffix = matches.count > 30 ? "\n... \(matches.count - 30) more" : ""
+            alert.informativeText = resultLines.joined(separator: "\n") + suffix
+        }
+        alert.addButton(withTitle: "OK")
+        alert.runModal()
+    }
+
     private func showError(_ error: Error) {
         let alert = NSAlert()
         alert.alertStyle = .warning
@@ -311,7 +640,8 @@ extension MainWindowController: WKScriptMessageHandler {
 
         let pane = (body["pane"] as? String) ?? activePane
         let path = body["path"] as? String
-        handle(action, pane: pane, path: path)
+        let command = body["command"] as? String
+        handle(action, pane: pane, path: path, command: command)
     }
 }
 
@@ -335,6 +665,7 @@ private struct PaneState: Encodable {
     let title: String
     let tabNames: [String]
     let path: String
+    let searchQuery: String
     let entries: [EntryState]
 }
 

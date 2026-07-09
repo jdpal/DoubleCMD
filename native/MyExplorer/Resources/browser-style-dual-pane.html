@@ -31,21 +31,28 @@
       box-sizing: border-box;
     }
 
+    html,
     body {
       margin: 0;
-      min-height: 100vh;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
       background: #d5d9df;
       color: var(--text);
     }
 
     .app {
-      min-height: 100vh;
+      height: var(--app-height, 100vh);
+      min-height: 0;
       display: grid;
-      grid-template-rows: auto 1fr auto;
+      grid-template-rows: auto minmax(0, 1fr);
       background: var(--panel);
+      overflow: hidden;
+      padding-bottom: 42px;
     }
 
     .browser-chrome {
+      min-height: 0;
       background: linear-gradient(#f9fafb, var(--chrome));
       border-bottom: 1px solid var(--line);
       box-shadow: 0 1px 0 rgba(255, 255, 255, 0.8) inset;
@@ -61,26 +68,11 @@
       border-bottom: 1px solid var(--line);
     }
 
-    .traffic-lights {
-      display: flex;
-      align-items: center;
-      gap: 8px;
+    .window-control-spacer {
       width: 76px;
       height: 28px;
-      padding-left: 3px;
       flex: 0 0 auto;
     }
-
-    .traffic-lights span {
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      display: block;
-    }
-
-    .red { background: #ff5f57; }
-    .yellow { background: #febc2e; }
-    .green { background: #28c840; }
 
     .tab {
       min-width: 132px;
@@ -156,15 +148,6 @@
       font-size: 18px;
     }
 
-    .navigation-bar {
-      display: grid;
-      grid-template-columns: auto auto auto auto minmax(220px, 1fr) auto auto;
-      align-items: center;
-      gap: 6px;
-      padding: 8px 12px;
-      min-height: 48px;
-    }
-
     .icon-button {
       background: #ffffff;
       border-color: var(--line);
@@ -173,6 +156,10 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
+    }
+
+    button {
+      cursor: default;
     }
 
     .address-field {
@@ -205,7 +192,7 @@
       align-items: center;
       gap: 7px;
       min-height: 36px;
-      padding: 0 12px 8px 96px;
+      padding: 8px 12px 8px 96px;
       overflow: hidden;
     }
 
@@ -229,11 +216,14 @@
     .favorite.projects { background: #fff0df; border-color: #ffc77d; color: #955100; }
     .favorite.cloud { background: #e5f7fb; border-color: #a9ddea; color: #126579; }
     .favorite.network { background: #f0f2f5; border-color: #c9d1dc; color: #435064; }
+    .favorite.custom { background: #eef7ff; border-color: #b8d8ff; color: #1456a0; }
+    .favorite.add-favorite { background: #ffffff; border-color: var(--line); color: #2d333b; margin-left: auto; }
 
     .workspace {
       display: grid;
       grid-template-columns: 72px 1fr;
       min-height: 0;
+      overflow: hidden;
       background: #e9edf2;
     }
 
@@ -267,6 +257,7 @@
       display: grid;
       grid-template-columns: minmax(260px, 1fr) 6px minmax(260px, 1fr);
       min-height: 0;
+      overflow: hidden;
       padding: 8px 10px;
       gap: 0;
     }
@@ -316,20 +307,32 @@
       align-items: center;
       gap: 7px;
       min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .pane-path {
-      display: flex;
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
       align-items: center;
       gap: 6px;
-      height: 30px;
+      min-height: 34px;
       padding: 0 10px;
       border-bottom: 1px solid #dde1e6;
       color: var(--muted);
       font-size: 12px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+    }
+
+    .pane-search {
+      min-width: 0;
+      height: 25px;
+      border: 1px solid #cfd5dd;
+      border-radius: 7px;
+      padding: 0 8px;
+      background: #ffffff;
+      color: #2d333b;
+      font: inherit;
     }
 
     .pane-tabs {
@@ -487,14 +490,21 @@
     }
 
     .command-bar {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 20;
       display: grid;
       grid-template-columns: minmax(180px, 1fr) auto;
       gap: 10px;
       align-items: center;
-      min-height: 42px;
+      flex: 0 0 auto;
+      height: 42px;
       padding: 6px 12px;
       border-top: 1px solid var(--line);
       background: #f6f7f9;
+      box-shadow: 0 -1px 3px rgba(15, 23, 42, 0.08);
     }
 
     .command-input {
@@ -596,11 +606,7 @@
   <main class="app">
     <header class="browser-chrome">
       <section class="tab-strip" aria-label="Workspace tabs">
-        <div class="traffic-lights" aria-hidden="true">
-          <span class="red"></span>
-          <span class="yellow"></span>
-          <span class="green"></span>
-        </div>
+        <div class="window-control-spacer" aria-hidden="true"></div>
         <div class="tab active">
           <span class="tab-title"><svg class="svg-icon"><use href="#i-folder"></use></svg>Compare: Project Files</span>
           <button class="tab-close" aria-label="Close tab"><svg class="svg-icon"><use href="#i-x"></use></svg></button>
@@ -616,19 +622,6 @@
         <button class="new-tab" aria-label="New workspace tab"><svg class="svg-icon"><use href="#i-plus"></use></svg></button>
       </section>
 
-      <section class="navigation-bar" aria-label="Navigation">
-        <button class="icon-button" aria-label="Back"><svg class="svg-icon"><use href="#i-arrow-left"></use></svg></button>
-        <button class="icon-button" aria-label="Forward"><svg class="svg-icon"><use href="#i-arrow-right"></use></svg></button>
-        <button class="icon-button" aria-label="Up folder"><svg class="svg-icon"><use href="#i-arrow-up"></use></svg></button>
-        <button class="icon-button" aria-label="Refresh"><svg class="svg-icon"><use href="#i-refresh"></use></svg></button>
-        <div class="address-field">
-          <svg class="svg-icon path-icon"><use href="#i-home"></use></svg>
-          <span class="path-text">/Users/jatin/Downloads/Development/my-explorer</span>
-        </div>
-        <button class="icon-button" aria-label="Search"><svg class="svg-icon"><use href="#i-search"></use></svg></button>
-        <button class="icon-button" aria-label="More"><svg class="svg-icon"><use href="#i-more"></use></svg></button>
-      </section>
-
       <section class="favorites-bar" aria-label="Favorites bar">
         <button class="favorite desktop"><svg class="svg-icon"><use href="#i-desktop"></use></svg>Desktop</button>
         <button class="favorite downloads"><svg class="svg-icon"><use href="#i-download"></use></svg>Downloads</button>
@@ -636,6 +629,7 @@
         <button class="favorite projects"><svg class="svg-icon"><use href="#i-folder"></use></svg>Projects</button>
         <button class="favorite cloud"><svg class="svg-icon"><use href="#i-cloud"></use></svg>iCloud Drive</button>
         <button class="favorite network"><svg class="svg-icon"><use href="#i-network"></use></svg>Network</button>
+        <button class="favorite add-favorite"><svg class="svg-icon"><use href="#i-plus"></use></svg>Add Favourite</button>
       </section>
     </header>
 
@@ -650,14 +644,14 @@
       <section class="dual-pane" aria-label="Dual file panes">
         <section class="file-pane left">
           <header class="pane-header">
-            <span class="pane-title"><svg class="svg-icon"><use href="#i-folder"></use></svg>Left Pane</span>
+            <span class="pane-title"><svg class="svg-icon"><use href="#i-folder"></use></svg>/Users/jatin/Downloads/Development/my-explorer/src</span>
             <div class="pane-tabs">
               <span class="mini-tab active"><svg class="svg-icon"><use href="#i-folder"></use></svg>src</span>
               <span class="mini-tab"><svg class="svg-icon"><use href="#i-file"></use></svg>docs</span>
               <span class="mini-tab"><svg class="svg-icon"><use href="#i-plus"></use></svg></span>
             </div>
           </header>
-          <div class="pane-path"><svg class="svg-icon"><use href="#i-folder"></use></svg>/Users/jatin/Downloads/Development/my-explorer/src</div>
+          <div class="pane-path"><svg class="svg-icon"><use href="#i-search"></use></svg><input class="pane-search" placeholder="Search this folder"></div>
           <div class="file-table">
             <table>
               <thead>
@@ -690,14 +684,14 @@
 
         <section class="file-pane right">
           <header class="pane-header">
-            <span class="pane-title"><svg class="svg-icon"><use href="#i-folder"></use></svg>Right Pane</span>
+            <span class="pane-title"><svg class="svg-icon"><use href="#i-folder"></use></svg>/Users/jatin/Downloads/Development/my-explorer/mockups</span>
             <div class="pane-tabs">
               <span class="mini-tab active"><svg class="svg-icon"><use href="#i-folder"></use></svg>mockups</span>
               <span class="mini-tab"><svg class="svg-icon"><use href="#i-tool"></use></svg>build</span>
               <span class="mini-tab"><svg class="svg-icon"><use href="#i-plus"></use></svg></span>
             </div>
           </header>
-          <div class="pane-path"><svg class="svg-icon"><use href="#i-folder"></use></svg>/Users/jatin/Downloads/Development/my-explorer/mockups</div>
+          <div class="pane-path"><svg class="svg-icon"><use href="#i-search"></use></svg><input class="pane-search" placeholder="Search this folder"></div>
           <div class="file-table">
             <table>
               <thead>
@@ -729,7 +723,7 @@
     </section>
 
     <footer class="command-bar">
-      <div class="command-input">Command line</div>
+      <input class="command-input" placeholder="Command line">
       <nav class="function-keys" aria-label="Function keys">
         <button><svg class="svg-icon"><use href="#i-eye"></use></svg>F3 View</button>
         <button><svg class="svg-icon"><use href="#i-edit"></use></svg>F4 Edit</button>
@@ -745,6 +739,11 @@
       const state = {
         activePane: "left",
         selected: { left: null, right: null }
+      };
+      const searchTimers = {};
+
+      const updateAppHeight = () => {
+        document.documentElement.style.setProperty("--app-height", `${window.innerHeight}px`);
       };
 
       const post = (payload) => {
@@ -769,14 +768,24 @@
           <button class="favorite ${escapeHTML(favorite.style)}" data-path="${escapeHTML(favorite.path)}">
             ${icon(favorite.symbol)}${escapeHTML(favorite.title)}
           </button>
-        `).join("");
+        `).join("") + `
+          <button class="favorite add-favorite" data-add-favorite="true">
+            ${icon("i-plus")}Add Favourite
+          </button>
+        `;
 
         bar.querySelectorAll("button").forEach((button) => {
-          button.addEventListener("click", () => post({
-            action: "favorite",
-            pane: state.activePane,
-            path: button.dataset.path
-          }));
+          button.addEventListener("click", () => {
+            if (button.dataset.addFavorite === "true") {
+              post({ action: "addFavorite", pane: state.activePane });
+              return;
+            }
+            post({
+              action: "favorite",
+              pane: state.activePane,
+              path: button.dataset.path
+            });
+          });
         });
       };
 
@@ -786,7 +795,8 @@
 
         const title = element.querySelector(".pane-title");
         if (title) {
-          title.innerHTML = `${icon("i-folder")}${escapeHTML(pane.title)}`;
+          title.innerHTML = `${icon("i-folder")}${escapeHTML(pane.path)}`;
+          title.title = pane.path;
         }
 
         const tabs = element.querySelector(".pane-tabs");
@@ -798,7 +808,14 @@
 
         const path = element.querySelector(".pane-path");
         if (path) {
-          path.innerHTML = `${icon("i-folder")}${escapeHTML(pane.path)}`;
+          path.innerHTML = `${icon("i-search")}<input class="pane-search" placeholder="Search all subfolders in ${escapeHTML(pane.path)}" value="${escapeHTML(pane.searchQuery || "")}">`;
+          path.querySelector(".pane-search")?.addEventListener("input", (event) => {
+            const query = event.currentTarget.value;
+            clearTimeout(searchTimers[pane.id]);
+            searchTimers[pane.id] = setTimeout(() => {
+              post({ action: "searchPane", pane: pane.id, command: query });
+            }, 350);
+          });
         }
 
         const body = element.querySelector("tbody");
@@ -835,39 +852,75 @@
             post({ action: "open", pane: pane.id, path: row.dataset.path });
           });
         });
+
       };
 
       const bindStaticControls = () => {
         const actionForButton = (button) => {
           const text = button.textContent.trim();
           const label = button.getAttribute("aria-label") || text;
+          if (button.closest(".sidebar")) {
+            if (text.includes("Favs")) return "favorites";
+            if (text.includes("Disk")) return "disk";
+            if (text.includes("Net")) return "network";
+            if (text.includes("Tools")) return "tools";
+          }
           if (label === "Back" || label === "Up folder") return "parent";
           if (label === "Refresh") return "refresh";
           if (label === "Search") return "search";
           if (label === "More") return "more";
           if (text.includes("F3")) return "open";
-          if (text.includes("F4")) return "open";
+          if (text.includes("F4")) return "edit";
           if (text.includes("F5")) return "copy";
           if (text.includes("F6")) return "move";
+          if (text.includes("F7")) return "mkdir";
           if (text.includes("F8")) return "delete";
+          if (text.includes("Terminal")) return "terminal";
           return null;
         };
 
-        document.querySelectorAll(".navigation-bar button, .function-keys button, .sidebar button").forEach((button) => {
+        document.querySelectorAll(".function-keys button, .sidebar button").forEach((button) => {
           button.addEventListener("click", () => {
             const action = actionForButton(button);
             if (!action) return;
+            if (button.closest(".sidebar")) {
+              document.querySelectorAll(".sidebar button").forEach((item) => item.classList.remove("active"));
+              button.classList.add("active");
+            }
             const selectedPath = state.selected[state.activePane];
             if (action === "delete" && selectedPath && !confirm("Move selected item to Trash?")) return;
             post({ action, pane: state.activePane, path: selectedPath });
           });
+        });
+
+        document.querySelector(".command-input")?.addEventListener("keydown", (event) => {
+          if (event.key !== "Enter") return;
+          event.preventDefault();
+          post({ action: "terminal", pane: state.activePane, path: state.selected[state.activePane], command: event.currentTarget.value });
+        });
+
+        document.addEventListener("keydown", (event) => {
+          const selectedPath = state.selected[state.activePane];
+          const keyActions = {
+            F2: "rename",
+            F3: "open",
+            F4: "edit",
+            F5: "copy",
+            F6: "move",
+            F7: "mkdir",
+            F8: "delete"
+          };
+          const action = keyActions[event.key];
+          if (!action) return;
+          event.preventDefault();
+          if (action === "delete" && selectedPath && !confirm("Move selected item to Trash?")) return;
+          post({ action, pane: state.activePane, path: selectedPath });
         });
       };
 
       window.MyExplorerApp = {
         render(nextState) {
           state.activePane = nextState.activePane || state.activePane;
-          document.querySelector(".path-text").textContent = nextState.addressPath || "";
           renderFavorites(nextState.favorites || []);
           renderPane(nextState.left);
           renderPane(nextState.right);
@@ -877,6 +930,8 @@
         }
       };
 
+      updateAppHeight();
+      window.addEventListener("resize", updateAppHeight);
       bindStaticControls();
     })();
   </script>
