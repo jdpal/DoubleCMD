@@ -20,7 +20,6 @@ DC_VER=$DC_MAJOR.$DC_MINOR.$DC_MICRO
 
 # Set widgetset
 export lcl=cocoa
-export DC_BUILD_OPTIONS="--compiler-options=-dDisableCocoaModernForm"
 
 mkdir -p $PACK_DIR
 

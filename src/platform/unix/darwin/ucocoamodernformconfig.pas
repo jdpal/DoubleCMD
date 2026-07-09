@@ -1,5 +1,7 @@
 unit uCocoaModernFormConfig;
 
+{$define DisableCocoaModernForm}
+
 {$if NOT defined(DisableCocoaModernForm)}
 
 {$include ucocoamodernformconfig.inc}
