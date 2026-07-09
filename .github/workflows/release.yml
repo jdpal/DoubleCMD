@@ -10,22 +10,27 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   build-mac:
     runs-on: macos-14
+    permissions:
+      contents: write
+    env:
+      UNRAR_VERSION: 7.2.7
+      UNRAR_SHA256: 01d903a7dcf413cb2925696d7796e48e38d471f79bfe7ef3ad2aebf6c12dbefd
     steps:
     - name: Install Free Pascal
-      uses: doublecmd/lazarus-install@mac
+      uses: doublecmd/lazarus-install@94ae630e73cf6921e866bd1d157374a29e2c899d
       with:
         lazarus-version: "stable"
 
     - name: Get Lazarus source
-      uses: actions/checkout@v7
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
       with:
             repository: 'fpc/Lazarus'
-            ref: 'fixes_4'
+            ref: 'ed778a69187eb20be7b81621ebd7619db04b9890'
 
     - name: Build and install Lazarus
       run: |
@@ -39,12 +44,15 @@ jobs:
            sudo sed -i -e "s|_PPCARCH_|fpc|g; s|/Developer/lazarus|/usr/local/share/lazarus|g" /etc/lazarus/environmentoptions.xml
 
     - name: Checkout source
-      uses: actions/checkout@v7
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
       with:
         fetch-depth: 0
 
     - name: Download unrar source code
-      run: wget https://www.rarlab.com/rar/unrarsrc-7.2.7.tar.gz -O /tmp/unrarsrc.tar.gz
+      run: curl -fsSL "https://www.rarlab.com/rar/unrarsrc-${UNRAR_VERSION}.tar.gz" -o /tmp/unrarsrc.tar.gz
+
+    - name: Verify unrar source code
+      run: echo "${UNRAR_SHA256}  /tmp/unrarsrc.tar.gz" | shasum -a 256 -c -
       
     - name: Extract unrar source code
       run: cd /tmp && tar xzf unrarsrc.tar.gz
@@ -53,9 +61,6 @@ jobs:
       run: ./.github/scripts/create_release.sh
 
     - name: Upload binaries to release
-      uses: svenstaro/upload-release-action@v2
-      with:
-        file: doublecmd-release/doublecmd*.dmg
-        tag: ${{ github.ref }}
-        overwrite: true
-        file_glob: true
+      run: gh release upload "$GITHUB_REF_NAME" doublecmd-release/doublecmd*.dmg --repo "$GITHUB_REPOSITORY" --clobber
+      env:
+        GH_TOKEN: ${{ github.token }}
