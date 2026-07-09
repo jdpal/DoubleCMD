@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 # Set processor architecture
 if [ -z $CPU_TARGET ]; then
@@ -40,6 +41,8 @@ cp -a doublecmd                    $DC_INSTALL_DIR/
 cp -a doublecmd.help               $DC_INSTALL_DIR/
 cp -a doublecmd.zdli               $DC_INSTALL_DIR/
 cp -a pinyin.tbl                   $DC_INSTALL_DIR/
+
+test -x "$DC_INSTALL_DIR/doublecmd"
 
 # Copy plugins
 

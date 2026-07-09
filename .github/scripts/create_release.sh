@@ -40,7 +40,10 @@ build_unrar()
 build_doublecmd()
 {
   # Build all components of My Explorer, based on Double Commander.
+  mkdir -p doublecmd.app/Contents/MacOS
   ./build.sh release
+  test -x doublecmd
+  test -f doublecmd.zdli
 
   # Copy libraries
   cp -a install/darwin/lib/$CPU_TARGET/*.dylib ./
@@ -50,6 +53,7 @@ build_doublecmd()
   install/darwin/install.sh $BUILD_PACK_DIR
   pushd $BUILD_PACK_DIR
   mv doublecmd.app 'My Explorer.app'
+  test -x 'My Explorer.app/Contents/MacOS/doublecmd'
   codesign --deep --force --verify --verbose --sign '-' 'My Explorer.app'
   popd
 
