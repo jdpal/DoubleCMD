@@ -34,3 +34,6 @@ lib/
 # Application bundle for Mac OS
 *.app/
 .DS_Store
+
+# Local release artifacts
+my-explorer-release/
