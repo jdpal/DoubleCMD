@@ -1,11 +1,14 @@
-after moving "Double Commander.app" into "/Applications"
+after moving "My Explorer.app" into "/Applications"
 
 run the following command in the Terminal:
 
-xattr -cr "/Applications/Double Commander.app/"
+xattr -cr "/Applications/My Explorer.app/"
 
 
-Official Homepage:
+My Explorer:
+https://github.com/jdpal/DoubleCMD
+
+Based on Double Commander:
 https://doublecmd.sourceforge.io
 
 Github:

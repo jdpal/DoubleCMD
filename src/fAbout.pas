@@ -1,5 +1,5 @@
 {
-    Double Commander
+    My Explorer, based on the open-source Double Commander project
     -------------------------------------------------------------------------
     About dialog
 
@@ -80,6 +80,8 @@ uses
 const
   cIndention = LineEnding + #32#32;
   cAboutMsg =
+    'My Explorer is based on the open-source Double Commander project.' + LineEnding +
+    'Original project: https://github.com/doublecmd/doublecmd' + LineEnding + LineEnding +
     'This program is free software under GNU GPL 2 license, see COPYING.txt file.' + LineEnding + LineEnding +
     'Active developers: '+ cIndention +
     'Alexander Koblov (alexx2000@mail.ru) - author, core developer' + cIndention +
@@ -106,7 +108,7 @@ const
     'Dmytro Zheludko (doublecmd@zheludko.mail.ua)' + cIndention +
     'Andryei Gudyak - main icon' + cIndention +
     'translators (see details in language files)  ' + LineEnding + LineEnding +
-    'Double Commander uses icons from:' + LineEnding +
+    'My Explorer uses icons from:' + LineEnding +
     '- Tango Icon Library (http://tango.freedesktop.org/Tango_Icon_Library)' + LineEnding +
     '- Silk icon set 1.3 by Mark James (http://www.famfamfam.com/lab/icons/silk/)' + LineEnding +
     '- Elementary icon theme 2.7.1 (https://github.com/elementary/icons)' + LineEnding +
@@ -149,7 +151,7 @@ procedure TfrmAbout.lblHomePageAddressClick(Sender: TObject);
 var
   ErrMsg: String;
 begin
-  dmHelpMgr.HTMLHelpDatabase.ShowURL('https://doublecmd.sourceforge.io','Double Commander Web Site', ErrMsg);
+  dmHelpMgr.HTMLHelpDatabase.ShowURL('https://github.com/jdpal/DoubleCMD','My Explorer Web Site', ErrMsg);
 end;
 
 procedure TfrmAbout.btnCopyToClipboardClick(Sender: TObject);

@@ -1,5 +1,5 @@
 {"version":1,"strings":[
-{"hash":185879090,"name":"tfrmmain.caption","sourcebytes":[68,111,117,98,108,101,32,67,111,109,109,97,110,100,101,114],"value":"Double Commander"},
+{"hash":185879090,"name":"tfrmmain.caption","sourcebytes":[68,111,117,98,108,101,32,67,111,109,109,97,110,100,101,114],"value":"My Explorer"},
 {"hash":234286985,"name":"tfrmmain.btnlefthome.hint","sourcebytes":[71,111,32,116,111,32,104,111,109,101,32,100,105,114,101,99,116,111,114,121],"value":"Go to home directory"},
 {"hash":126,"name":"tfrmmain.btnlefthome.caption","sourcebytes":[126],"value":"~"},
 {"hash":167727721,"name":"tfrmmain.btnleftup.hint","sourcebytes":[71,111,32,116,111,32,112,97,114,101,110,116,32,100,105,114,101,99,116,111,114,121],"value":"Go to parent directory"},
@@ -41,7 +41,7 @@
 {"hash":310020,"name":"tfrmmain.actedit.caption","sourcebytes":[69,100,105,116],"value":"Edit"},
 {"hash":106606355,"name":"tfrmmain.acthelpindex.caption","sourcebytes":[38,67,111,110,116,101,110,116,115],"value":"&Contents"},
 {"hash":217674644,"name":"tfrmmain.actkeyboard.caption","sourcebytes":[38,75,101,121,98,111,97,114,100],"value":"&Keyboard"},
-{"hash":220405653,"name":"tfrmmain.actvisithomepage.caption","sourcebytes":[38,86,105,115,105,116,32,68,111,117,98,108,101,32,67,111,109,109,97,110,100,101,114,32,87,101,98,115,105,116,101],"value":"&Visit Double Commander Website"},
+{"hash":220405653,"name":"tfrmmain.actvisithomepage.caption","sourcebytes":[38,86,105,115,105,116,32,68,111,117,98,108,101,32,67,111,109,109,97,110,100,101,114,32,87,101,98,115,105,116,101],"value":"&Visit My Explorer Website"},
 {"hash":44537540,"name":"tfrmmain.actabout.caption","sourcebytes":[38,65,98,111,117,116],"value":"&About"},
 {"hash":9324734,"name":"tfrmmain.actoptions.caption","sourcebytes":[38,79,112,116,105,111,110,115,46,46,46],"value":"&Options..."},
 {"hash":159468684,"name":"tfrmmain.actmultirename.caption","sourcebytes":[77,117,108,116,105,45,38,82,101,110,97,109,101,32,84,111,111,108],"value":"Multi-&Rename Tool"},

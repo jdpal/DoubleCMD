@@ -59,7 +59,7 @@ jobs:
         name: snapshot-mac
         retention-days: 1
         compression-level: 0
-        path: doublecmd-release/doublecmd*.dmg
+        path: my-explorer-release/my-explorer*.dmg
 
   build-win:
     runs-on: windows-latest

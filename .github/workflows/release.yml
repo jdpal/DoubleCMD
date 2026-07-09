@@ -61,6 +61,6 @@ jobs:
       run: ./.github/scripts/create_release.sh
 
     - name: Upload binaries to release
-      run: gh release upload "$GITHUB_REF_NAME" doublecmd-release/doublecmd*.dmg --repo "$GITHUB_REPOSITORY" --clobber
+      run: gh release upload "$GITHUB_REF_NAME" my-explorer-release/my-explorer*.dmg --repo "$GITHUB_REPOSITORY" --clobber
       env:
         GH_TOKEN: ${{ github.token }}

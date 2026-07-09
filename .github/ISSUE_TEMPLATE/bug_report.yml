@@ -12,7 +12,7 @@ body:
   attributes:
     label: Version
     placeholder: |
-      Double Commander
+      My Explorer
       Version: 1.0.9
       Revision: 222
       Commit: a844456e4

@@ -1,6 +1,6 @@
 {"version":1,"strings":[
-{"hash":185879090,"name":"tfrmstartingsplash.caption","sourcebytes":[68,111,117,98,108,101,32,67,111,109,109,97,110,100,101,114],"value":"Double Commander"},
-{"hash":185879090,"name":"tfrmstartingsplash.lbltitle.caption","sourcebytes":[68,111,117,98,108,101,32,67,111,109,109,97,110,100,101,114],"value":"Double Commander"},
+{"hash":185879090,"name":"tfrmstartingsplash.caption","sourcebytes":[68,111,117,98,108,101,32,67,111,109,109,97,110,100,101,114],"value":"My Explorer"},
+{"hash":185879090,"name":"tfrmstartingsplash.lbltitle.caption","sourcebytes":[68,111,117,98,108,101,32,67,111,109,109,97,110,100,101,114],"value":"My Explorer"},
 {"hash":214540302,"name":"tfrmstartingsplash.lblversion.caption","sourcebytes":[86,101,114,115,105,111,110],"value":"Version"},
 {"hash":214997982,"name":"tfrmstartingsplash.lblrevision.caption","sourcebytes":[82,101,118,105,115,105,111,110],"value":"Revision"},
 {"hash":4833316,"name":"tfrmstartingsplash.lblbuild.caption","sourcebytes":[66,117,105,108,100],"value":"Build"},

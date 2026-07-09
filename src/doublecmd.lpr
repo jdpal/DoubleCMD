@@ -1,5 +1,7 @@
 program doublecmd;
 
+// My Explorer is based on the open-source Double Commander project.
+
 {$IF DEFINED(LCLGTK3) AND NOT DEFINED(LCL_VER_499)}
 {$FATAL LCLGTK3 is not production ready}
 {$ENDIF}
@@ -124,7 +126,7 @@ begin
   // Initialize again
   uSystem.Initialize;
 
-  DCDebug('Starting Double Commander');
+  DCDebug('Starting My Explorer');
 
   // Initialize random number generator
   Randomize;
@@ -150,7 +152,7 @@ begin
   // see http://bugs.freepascal.org/view.php?id=22044
   Application.BidiMode:= bdLeftToRight;
 
-  Application.Title:='Double Commander';
+  Application.Title:='My Explorer';
   Application.Initialize;
 
 {$IF DEFINED(DARWIN)}
@@ -260,5 +262,5 @@ begin
     end;
   end;
   uKeyboard.CleanupKeyboard;
-  DCDebug('Finished Double Commander');
+  DCDebug('Finished My Explorer');
 end.

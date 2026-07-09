@@ -1,5 +1,5 @@
 ﻿{
-   Double Commander
+   My Explorer, based on the open-source Double Commander project
    -------------------------------------------------------------------------
    Licence  : GNU GPL v 2.0
    Copyright (C) 2006-2023 Alexander Koblov (Alexx2000@mail.ru)
@@ -1113,7 +1113,7 @@ procedure TfrmMain.FormCreate(Sender: TObject);
     end;
 
     Result := Format('%s%s %s%s',
-        ['Double Commander',
+        ['My Explorer',
         AServerName,
         Copy2Space(dcVersion),
         ARevision]
@@ -7486,4 +7486,3 @@ initialization
   TFormCommands.RegisterCommandsForm(TfrmMain, HotkeysCategory, @rsHotkeyCategoryMain);
 
 end.
-
