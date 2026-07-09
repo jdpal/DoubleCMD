@@ -92,6 +92,10 @@
       white-space: nowrap;
     }
 
+    .tab-strip .tab {
+      cursor: default;
+    }
+
     .svg-icon {
       width: 16px;
       height: 16px;
@@ -505,6 +509,8 @@
       border-top: 1px solid var(--line);
       background: #f6f7f9;
       box-shadow: 0 -1px 3px rgba(15, 23, 42, 0.08);
+      -webkit-user-select: none;
+      user-select: none;
     }
 
     .command-input {
@@ -533,6 +539,8 @@
       display: inline-flex;
       align-items: center;
       gap: 6px;
+      -webkit-user-select: none;
+      user-select: none;
     }
 
     @media (max-width: 780px) {
@@ -607,38 +615,38 @@
     <header class="browser-chrome">
       <section class="tab-strip" aria-label="Workspace tabs">
         <div class="window-control-spacer" aria-hidden="true"></div>
-        <div class="tab active">
+        <button class="tab active" data-tab-id="workspace-1" type="button">
           <span class="tab-title"><svg class="svg-icon"><use href="#i-folder"></use></svg>Compare: Project Files</span>
-          <button class="tab-close" aria-label="Close tab"><svg class="svg-icon"><use href="#i-x"></use></svg></button>
-        </div>
-        <div class="tab">
+          <span class="tab-close" aria-label="Close tab"><svg class="svg-icon"><use href="#i-x"></use></svg></span>
+        </button>
+        <button class="tab" data-tab-id="workspace-2" type="button">
           <span class="tab-title"><svg class="svg-icon"><use href="#i-download"></use></svg>Downloads Review</span>
-          <button class="tab-close" aria-label="Close tab"><svg class="svg-icon"><use href="#i-x"></use></svg></button>
-        </div>
-        <div class="tab">
+          <span class="tab-close" aria-label="Close tab"><svg class="svg-icon"><use href="#i-x"></use></svg></span>
+        </button>
+        <button class="tab" data-tab-id="workspace-3" type="button">
           <span class="tab-title"><svg class="svg-icon"><use href="#i-file"></use></svg>Documents</span>
-          <button class="tab-close" aria-label="Close tab"><svg class="svg-icon"><use href="#i-x"></use></svg></button>
-        </div>
-        <button class="new-tab" aria-label="New workspace tab"><svg class="svg-icon"><use href="#i-plus"></use></svg></button>
+          <span class="tab-close" aria-label="Close tab"><svg class="svg-icon"><use href="#i-x"></use></svg></span>
+        </button>
+        <button class="new-tab" aria-label="New workspace tab" type="button"><svg class="svg-icon"><use href="#i-plus"></use></svg></button>
       </section>
 
       <section class="favorites-bar" aria-label="Favorites bar">
-        <button class="favorite desktop"><svg class="svg-icon"><use href="#i-desktop"></use></svg>Desktop</button>
-        <button class="favorite downloads"><svg class="svg-icon"><use href="#i-download"></use></svg>Downloads</button>
-        <button class="favorite documents"><svg class="svg-icon"><use href="#i-file"></use></svg>Documents</button>
-        <button class="favorite projects"><svg class="svg-icon"><use href="#i-folder"></use></svg>Projects</button>
-        <button class="favorite cloud"><svg class="svg-icon"><use href="#i-cloud"></use></svg>iCloud Drive</button>
-        <button class="favorite network"><svg class="svg-icon"><use href="#i-network"></use></svg>Network</button>
-        <button class="favorite add-favorite"><svg class="svg-icon"><use href="#i-plus"></use></svg>Add Favourite</button>
+        <button class="favorite desktop" type="button"><svg class="svg-icon"><use href="#i-desktop"></use></svg>Desktop</button>
+        <button class="favorite downloads" type="button"><svg class="svg-icon"><use href="#i-download"></use></svg>Downloads</button>
+        <button class="favorite documents" type="button"><svg class="svg-icon"><use href="#i-file"></use></svg>Documents</button>
+        <button class="favorite projects" type="button"><svg class="svg-icon"><use href="#i-folder"></use></svg>Projects</button>
+        <button class="favorite cloud" type="button"><svg class="svg-icon"><use href="#i-cloud"></use></svg>iCloud Drive</button>
+        <button class="favorite network" type="button"><svg class="svg-icon"><use href="#i-network"></use></svg>Network</button>
+        <button class="favorite add-favorite" type="button"><svg class="svg-icon"><use href="#i-plus"></use></svg>Add Favourite</button>
       </section>
     </header>
 
     <section class="workspace">
       <aside class="sidebar" aria-label="Locations">
-        <button class="active"><svg class="svg-icon"><use href="#i-star"></use></svg>Favs</button>
-        <button><svg class="svg-icon"><use href="#i-drive"></use></svg>Disk</button>
-        <button><svg class="svg-icon"><use href="#i-network"></use></svg>Net</button>
-        <button><svg class="svg-icon"><use href="#i-tool"></use></svg>Tools</button>
+        <button class="active" data-action="favorites" type="button"><svg class="svg-icon"><use href="#i-star"></use></svg>Favs</button>
+        <button data-action="disk" type="button"><svg class="svg-icon"><use href="#i-drive"></use></svg>Disk</button>
+        <button data-action="network" type="button"><svg class="svg-icon"><use href="#i-network"></use></svg>Net</button>
+        <button data-action="tools" type="button"><svg class="svg-icon"><use href="#i-tool"></use></svg>Tools</button>
       </aside>
 
       <section class="dual-pane" aria-label="Dual file panes">
@@ -725,12 +733,12 @@
     <footer class="command-bar">
       <input class="command-input" placeholder="Command line">
       <nav class="function-keys" aria-label="Function keys">
-        <button><svg class="svg-icon"><use href="#i-eye"></use></svg>F3 View</button>
-        <button><svg class="svg-icon"><use href="#i-edit"></use></svg>F4 Edit</button>
-        <button><svg class="svg-icon"><use href="#i-copy"></use></svg>F5 Copy</button>
-        <button><svg class="svg-icon"><use href="#i-move"></use></svg>F6 Move</button>
-        <button><svg class="svg-icon"><use href="#i-folder"></use></svg>F7 Folder</button>
-        <button><svg class="svg-icon"><use href="#i-trash"></use></svg>F8 Delete</button>
+        <button data-action="open" type="button"><svg class="svg-icon"><use href="#i-eye"></use></svg>F3 View</button>
+        <button data-action="edit" type="button"><svg class="svg-icon"><use href="#i-edit"></use></svg>F4 Edit</button>
+        <button data-action="copy" type="button"><svg class="svg-icon"><use href="#i-copy"></use></svg>F5 Copy</button>
+        <button data-action="move" type="button"><svg class="svg-icon"><use href="#i-move"></use></svg>F6 Move</button>
+        <button data-action="mkdir" type="button"><svg class="svg-icon"><use href="#i-folder"></use></svg>F7 Folder</button>
+        <button data-action="delete" type="button"><svg class="svg-icon"><use href="#i-trash"></use></svg>F8 Delete</button>
       </nav>
     </footer>
   </main>
@@ -761,15 +769,48 @@
 
       const paneElement = (paneId) => document.querySelector(`.file-pane.${paneId === "left" ? "left" : "right"}`);
 
+      const renderWorkspaces = (workspaces) => {
+        const strip = document.querySelector(".tab-strip");
+        if (!strip) return;
+        strip.innerHTML = `
+          <div class="window-control-spacer" aria-hidden="true"></div>
+          ${workspaces.map((workspace) => `
+            <button class="tab ${workspace.isActive ? "active" : ""}" data-tab-id="${escapeHTML(workspace.id)}" type="button">
+              <span class="tab-title">${icon(workspace.symbol)}${escapeHTML(workspace.title)}</span>
+              <span class="tab-close" data-close-tab="true" aria-label="Close tab">${icon("i-x")}</span>
+            </button>
+          `).join("")}
+          <button class="new-tab" aria-label="New workspace tab" type="button">${icon("i-plus")}</button>
+        `;
+
+        strip.querySelectorAll(".tab").forEach((tab) => {
+          tab.addEventListener("click", () => {
+            post({ action: "workspaceSwitch", pane: state.activePane, tabID: tab.dataset.tabId });
+          });
+        });
+
+        strip.querySelectorAll("[data-close-tab='true']").forEach((closeButton) => {
+          closeButton.addEventListener("click", (event) => {
+            event.stopPropagation();
+            const tab = closeButton.closest(".tab");
+            post({ action: "workspaceClose", pane: state.activePane, tabID: tab?.dataset.tabId });
+          });
+        });
+
+        strip.querySelector(".new-tab")?.addEventListener("click", () => {
+          post({ action: "workspaceNew", pane: state.activePane });
+        });
+      };
+
       const renderFavorites = (favorites) => {
         const bar = document.querySelector(".favorites-bar");
         if (!bar) return;
         bar.innerHTML = favorites.map((favorite) => `
-          <button class="favorite ${escapeHTML(favorite.style)}" data-path="${escapeHTML(favorite.path)}">
+          <button class="favorite ${escapeHTML(favorite.style)}" data-path="${escapeHTML(favorite.path)}" type="button">
             ${icon(favorite.symbol)}${escapeHTML(favorite.title)}
           </button>
         `).join("") + `
-          <button class="favorite add-favorite" data-add-favorite="true">
+          <button class="favorite add-favorite" data-add-favorite="true" type="button">
             ${icon("i-plus")}Add Favourite
           </button>
         `;
@@ -821,7 +862,10 @@
         const body = element.querySelector("tbody");
         if (!body) return;
 
-        const selectedPath = state.selected[pane.id] || (pane.entries[1] && pane.entries[1].path) || (pane.entries[0] && pane.entries[0].path);
+        const previousSelection = state.selected[pane.id];
+        const selectedPath = pane.entries.some((entry) => entry.path === previousSelection)
+          ? previousSelection
+          : (pane.entries[1] && pane.entries[1].path) || (pane.entries[0] && pane.entries[0].path);
         state.selected[pane.id] = selectedPath;
 
         body.innerHTML = pane.entries.map((entry) => `
@@ -857,6 +901,7 @@
 
       const bindStaticControls = () => {
         const actionForButton = (button) => {
+          if (button.dataset.action) return button.dataset.action;
           const text = button.textContent.trim();
           const label = button.getAttribute("aria-label") || text;
           if (button.closest(".sidebar")) {
@@ -879,24 +924,34 @@
           return null;
         };
 
-        document.querySelectorAll(".function-keys button, .sidebar button").forEach((button) => {
+        const postButtonAction = (button) => {
+          const action = actionForButton(button);
+          if (!action) return;
+          if (button.closest(".sidebar")) {
+            document.querySelectorAll(".sidebar button").forEach((item) => item.classList.remove("active"));
+            button.classList.add("active");
+          }
+          const selectedPath = state.selected[state.activePane];
+          post({ action, pane: state.activePane, path: selectedPath });
+        };
+
+        document.querySelectorAll(".function-keys button").forEach((button) => {
+          button.addEventListener("mousedown", (event) => {
+            event.preventDefault();
+            postButtonAction(button);
+          });
+        });
+
+        document.querySelectorAll(".sidebar button").forEach((button) => {
           button.addEventListener("click", () => {
-            const action = actionForButton(button);
-            if (!action) return;
-            if (button.closest(".sidebar")) {
-              document.querySelectorAll(".sidebar button").forEach((item) => item.classList.remove("active"));
-              button.classList.add("active");
-            }
-            const selectedPath = state.selected[state.activePane];
-            if (action === "delete" && selectedPath && !confirm("Move selected item to Trash?")) return;
-            post({ action, pane: state.activePane, path: selectedPath });
+            postButtonAction(button);
           });
         });
 
         document.querySelector(".command-input")?.addEventListener("keydown", (event) => {
           if (event.key !== "Enter") return;
           event.preventDefault();
-          post({ action: "terminal", pane: state.activePane, path: state.selected[state.activePane], command: event.currentTarget.value });
+          post({ action: "commandLine", pane: state.activePane, path: state.selected[state.activePane], command: event.currentTarget.value });
         });
 
         document.addEventListener("keydown", (event) => {
@@ -913,7 +968,6 @@
           const action = keyActions[event.key];
           if (!action) return;
           event.preventDefault();
-          if (action === "delete" && selectedPath && !confirm("Move selected item to Trash?")) return;
           post({ action, pane: state.activePane, path: selectedPath });
         });
       };
@@ -921,6 +975,7 @@
       window.MyExplorerApp = {
         render(nextState) {
           state.activePane = nextState.activePane || state.activePane;
+          renderWorkspaces(nextState.workspaces || []);
           renderFavorites(nextState.favorites || []);
           renderPane(nextState.left);
           renderPane(nextState.right);

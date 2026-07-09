@@ -2,13 +2,36 @@ import AppKit
 import WebKit
 
 final class MyExplorerWebView: WKWebView {
+    private var possibleWindowDragEvent: NSEvent?
+    private var possibleWindowDragStart = NSPoint.zero
+
     override func mouseDown(with event: NSEvent) {
         let location = convert(event.locationInWindow, from: nil)
         if bounds.height - location.y <= 38 {
-            window?.performDrag(with: event)
-            return
+            possibleWindowDragEvent = event
+            possibleWindowDragStart = event.locationInWindow
+        } else {
+            possibleWindowDragEvent = nil
         }
         super.mouseDown(with: event)
+    }
+
+    override func mouseDragged(with event: NSEvent) {
+        if let dragEvent = possibleWindowDragEvent {
+            let deltaX = event.locationInWindow.x - possibleWindowDragStart.x
+            let deltaY = event.locationInWindow.y - possibleWindowDragStart.y
+            if hypot(deltaX, deltaY) > 3 {
+                possibleWindowDragEvent = nil
+                window?.performDrag(with: dragEvent)
+                return
+            }
+        }
+        super.mouseDragged(with: event)
+    }
+
+    override func mouseUp(with event: NSEvent) {
+        possibleWindowDragEvent = nil
+        super.mouseUp(with: event)
     }
 }
 
@@ -21,6 +44,8 @@ final class MainWindowController: NSWindowController {
     private var leftSearchQuery = ""
     private var rightSearchQuery = ""
     private let customFavoritesKey = "MyExplorer.CustomFavorites"
+    private var workspaces: [WorkspaceTab] = []
+    private var activeWorkspaceID = "workspace-1"
 
     init() {
         let configuration = WKWebViewConfiguration()
@@ -60,6 +85,7 @@ final class MainWindowController: NSWindowController {
         ])
 
         window.contentViewController = controller
+        setupDefaultWorkspaces()
         loadMockupShell()
     }
 
@@ -118,6 +144,7 @@ final class MainWindowController: NSWindowController {
         let state = AppState(
             activePane: activePane,
             addressPath: directory(for: activePane).path,
+            workspaces: workspaceStates(),
             favorites: favorites(),
             left: paneState(id: "left", title: "Left Pane", directory: leftDirectory, tabs: ["src", "docs"], searchQuery: leftSearchQuery),
             right: paneState(id: "right", title: "Right Pane", directory: rightDirectory, tabs: ["mockups", "build"], searchQuery: rightSearchQuery)
@@ -293,10 +320,11 @@ final class MainWindowController: NSWindowController {
             leftSearchQuery = ""
         }
         activePane = pane
+        saveCurrentWorkspace()
         sendState()
     }
 
-    private func handle(_ action: String, pane: String, path: String?, command: String? = nil) {
+    private func handle(_ action: String, pane: String, path: String?, command: String? = nil, tabID: String? = nil) {
         activePane = pane
         let selected = path.map { URL(fileURLWithPath: $0) }
 
@@ -321,6 +349,14 @@ final class MainWindowController: NSWindowController {
             addFavorite(directory(for: activePane))
         case "searchPane":
             setSearchQuery(command ?? "", for: pane)
+        case "workspaceNew":
+            createWorkspace()
+        case "workspaceSwitch":
+            guard let tabID else { return }
+            switchWorkspace(to: tabID)
+        case "workspaceClose":
+            guard let tabID else { return }
+            closeWorkspace(tabID)
         case "parent":
             setDirectory(directory(for: pane).deletingLastPathComponent(), for: pane)
         case "home":
@@ -339,15 +375,27 @@ final class MainWindowController: NSWindowController {
             showSearch()
         case "terminal":
             openTerminal(command: command)
+        case "commandLine":
+            runCommandLine(command)
         case "mkdir":
             makeDirectory(in: pane)
         case "rename":
             guard let selected else { return }
             rename(selected, pane: pane)
         case "copy", "move":
-            guard let selected else { return }
+            guard let selected, canOperate(on: selected) else { return }
             let targetDirectory = directory(for: pane == "right" ? "left" : "right")
             let target = targetDirectory.appendingPathComponent(selected.lastPathComponent)
+            let operation = action == "copy" ? "Copy" : "Move"
+            guard confirmFileOperation(
+                title: "\(operation) Item",
+                message: "\(operation) \"\(selected.lastPathComponent)\" to:\n\(targetDirectory.path)",
+                confirmTitle: operation
+            ) else { return }
+            guard !fileManager.fileExists(atPath: target.path) else {
+                showMessage(title: "\(operation) Item", message: "An item named \"\(selected.lastPathComponent)\" already exists in the destination.")
+                return
+            }
             do {
                 if action == "copy" {
                     try fileManager.copyItem(at: selected, to: target)
@@ -359,7 +407,12 @@ final class MainWindowController: NSWindowController {
                 showError(error)
             }
         case "delete":
-            guard let selected else { return }
+            guard let selected, canOperate(on: selected) else { return }
+            guard confirmFileOperation(
+                title: "Move to Trash",
+                message: "Move \"\(selected.lastPathComponent)\" to Trash?",
+                confirmTitle: "Move to Trash"
+            ) else { return }
             do {
                 var resultingURL: NSURL?
                 try fileManager.trashItem(at: selected, resultingItemURL: &resultingURL)
@@ -370,6 +423,29 @@ final class MainWindowController: NSWindowController {
         default:
             break
         }
+    }
+
+    private func canOperate(on url: URL) -> Bool {
+        guard url.lastPathComponent != ".." else {
+            NSSound.beep()
+            return false
+        }
+        guard fileManager.fileExists(atPath: url.path) else {
+            showMessage(title: "My Explorer", message: "The selected item no longer exists.")
+            sendState()
+            return false
+        }
+        return true
+    }
+
+    private func confirmFileOperation(title: String, message: String, confirmTitle: String) -> Bool {
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = title
+        alert.informativeText = message
+        alert.addButton(withTitle: confirmTitle)
+        alert.addButton(withTitle: "Cancel")
+        return alert.runModal() == .alertFirstButtonReturn
     }
 
     private func edit(_ url: URL, pane: String) {
@@ -401,6 +477,112 @@ final class MainWindowController: NSWindowController {
             rightSearchQuery = query
         } else {
             leftSearchQuery = query
+        }
+        saveCurrentWorkspace()
+        sendState()
+    }
+
+    private func setupDefaultWorkspaces() {
+        let home = fileManager.homeDirectoryForCurrentUser
+        workspaces = [
+            WorkspaceTab(
+                id: "workspace-1",
+                title: "Compare: Project Files",
+                symbol: "i-folder",
+                leftDirectory: home,
+                rightDirectory: home.appendingPathComponent("Downloads", isDirectory: true),
+                activePane: "left",
+                leftSearchQuery: "",
+                rightSearchQuery: ""
+            ),
+            WorkspaceTab(
+                id: "workspace-2",
+                title: "Downloads Review",
+                symbol: "i-download",
+                leftDirectory: home.appendingPathComponent("Downloads", isDirectory: true),
+                rightDirectory: home.appendingPathComponent("Downloads", isDirectory: true),
+                activePane: "right",
+                leftSearchQuery: "",
+                rightSearchQuery: ""
+            ),
+            WorkspaceTab(
+                id: "workspace-3",
+                title: "Documents",
+                symbol: "i-file",
+                leftDirectory: home.appendingPathComponent("Documents", isDirectory: true),
+                rightDirectory: home.appendingPathComponent("Downloads", isDirectory: true),
+                activePane: "left",
+                leftSearchQuery: "",
+                rightSearchQuery: ""
+            )
+        ]
+        loadWorkspace(workspaces[0])
+    }
+
+    private func workspaceStates() -> [WorkspaceState] {
+        workspaces.map {
+            WorkspaceState(id: $0.id, title: $0.title, symbol: $0.symbol, isActive: $0.id == activeWorkspaceID)
+        }
+    }
+
+    private func currentWorkspaceIndex() -> Int? {
+        workspaces.firstIndex { $0.id == activeWorkspaceID }
+    }
+
+    private func saveCurrentWorkspace() {
+        guard let index = currentWorkspaceIndex() else { return }
+        workspaces[index].leftDirectory = leftDirectory
+        workspaces[index].rightDirectory = rightDirectory
+        workspaces[index].activePane = activePane
+        workspaces[index].leftSearchQuery = leftSearchQuery
+        workspaces[index].rightSearchQuery = rightSearchQuery
+    }
+
+    private func loadWorkspace(_ workspace: WorkspaceTab) {
+        activeWorkspaceID = workspace.id
+        leftDirectory = workspace.leftDirectory
+        rightDirectory = workspace.rightDirectory
+        activePane = workspace.activePane
+        leftSearchQuery = workspace.leftSearchQuery
+        rightSearchQuery = workspace.rightSearchQuery
+    }
+
+    private func switchWorkspace(to id: String) {
+        guard let workspace = workspaces.first(where: { $0.id == id }) else { return }
+        saveCurrentWorkspace()
+        loadWorkspace(workspace)
+        sendState()
+    }
+
+    private func createWorkspace() {
+        saveCurrentWorkspace()
+        let id = "workspace-\((workspaces.map { Int($0.id.replacingOccurrences(of: "workspace-", with: "")) ?? 0 }.max() ?? 0) + 1)"
+        let title = "Tab \(workspaces.count + 1)"
+        let workspace = WorkspaceTab(
+            id: id,
+            title: title,
+            symbol: "i-folder",
+            leftDirectory: leftDirectory,
+            rightDirectory: rightDirectory,
+            activePane: activePane,
+            leftSearchQuery: leftSearchQuery,
+            rightSearchQuery: rightSearchQuery
+        )
+        workspaces.append(workspace)
+        loadWorkspace(workspace)
+        sendState()
+    }
+
+    private func closeWorkspace(_ id: String) {
+        guard workspaces.count > 1, let index = workspaces.firstIndex(where: { $0.id == id }) else {
+            NSSound.beep()
+            return
+        }
+        let closingActiveWorkspace = id == activeWorkspaceID
+        workspaces.remove(at: index)
+        if closingActiveWorkspace {
+            let nextIndex = min(index, workspaces.count - 1)
+            loadWorkspace(workspaces[nextIndex])
         }
         sendState()
     }
@@ -441,6 +623,23 @@ final class MainWindowController: NSWindowController {
         NSAppleScript(source: script)?.executeAndReturnError(&error)
         if error != nil {
             NSWorkspace.shared.open(URL(fileURLWithPath: "/System/Applications/Utilities/Terminal.app"))
+        }
+    }
+
+    private func runCommandLine(_ command: String?) {
+        let trimmed = command?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        guard !trimmed.isEmpty else {
+            openTerminal(command: nil)
+            return
+        }
+
+        let expanded = (trimmed as NSString).expandingTildeInPath
+        let pathURL = URL(fileURLWithPath: expanded, relativeTo: directory(for: activePane)).standardizedFileURL
+        var isDirectory: ObjCBool = false
+        if fileManager.fileExists(atPath: pathURL.path, isDirectory: &isDirectory), isDirectory.boolValue {
+            setDirectory(pathURL, for: activePane)
+        } else {
+            openTerminal(command: trimmed)
         }
     }
 
@@ -614,6 +813,14 @@ final class MainWindowController: NSWindowController {
         alert.runModal()
     }
 
+    private func showMessage(title: String, message: String) {
+        let alert = NSAlert()
+        alert.messageText = title
+        alert.informativeText = message
+        alert.addButton(withTitle: "OK")
+        alert.runModal()
+    }
+
     private func showError(_ error: Error) {
         let alert = NSAlert()
         alert.alertStyle = .warning
@@ -641,16 +848,36 @@ extension MainWindowController: WKScriptMessageHandler {
         let pane = (body["pane"] as? String) ?? activePane
         let path = body["path"] as? String
         let command = body["command"] as? String
-        handle(action, pane: pane, path: path, command: command)
+        let tabID = body["tabID"] as? String
+        handle(action, pane: pane, path: path, command: command, tabID: tabID)
     }
 }
 
 private struct AppState: Encodable {
     let activePane: String
     let addressPath: String
+    let workspaces: [WorkspaceState]
     let favorites: [FavoriteState]
     let left: PaneState
     let right: PaneState
+}
+
+private struct WorkspaceTab {
+    let id: String
+    var title: String
+    var symbol: String
+    var leftDirectory: URL
+    var rightDirectory: URL
+    var activePane: String
+    var leftSearchQuery: String
+    var rightSearchQuery: String
+}
+
+private struct WorkspaceState: Encodable {
+    let id: String
+    let title: String
+    let symbol: String
+    let isActive: Bool
 }
 
 private struct FavoriteState: Encodable {
