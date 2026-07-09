@@ -144,8 +144,6 @@ const
       identifier: 'EditorForm.ToolBar';
       style: NSWindowToolbarStyleAutomatic;
       displayMode: NSToolbarDisplayModeIconOnly;
-      autoHideInFullScreen: False;
-
       allowsUserCustomization: True;
       autosavesConfiguration: False;
 
@@ -214,4 +212,3 @@ begin
     TCocoaToolBarUtils.toClass(editorConfigurationItemConfig)
   ];
 end;
-

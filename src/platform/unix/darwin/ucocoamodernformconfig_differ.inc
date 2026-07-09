@@ -289,8 +289,6 @@ const
       identifier: 'DifferForm.ToolBar';
       style: NSWindowToolbarStyleAutomatic;
       displayMode: NSToolbarDisplayModeIconOnly;
-      autoHideInFullScreen: False;
-
       allowsUserCustomization: True;
       autosavesConfiguration: False;
 
@@ -383,4 +381,3 @@ begin
     TCocoaToolBarUtils.toClass(differCopyLeftToRightItemConfig)
   ];
 end;
-

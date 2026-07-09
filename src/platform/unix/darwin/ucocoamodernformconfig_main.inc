@@ -818,8 +818,6 @@ const
       identifier: 'MainForm.ToolBar';
       style: NSWindowToolbarStyleUnifiedCompact;
       displayMode: NSToolbarDisplayModeIconOnly;
-      autoHideInFullScreen: False;
-
       allowsUserCustomization: True;
       autosavesConfiguration: False;
 
