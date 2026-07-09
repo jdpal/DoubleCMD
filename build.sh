@@ -24,11 +24,14 @@ elif [ $lcl ]
 elif [ $CPU_TARGET ]
   then export DC_ARCH=$(echo "--cpu=$CPU_TARGET")
 fi
+if [ -z "$DC_BUILD_OPTIONS" ]
+  then export DC_BUILD_OPTIONS=
+fi
 
 build_doublecmd()
 {
   # Build Double Commander
-  $lazbuild src/doublecmd.lpi --bm=release $DC_ARCH
+  $lazbuild src/doublecmd.lpi --bm=release $DC_ARCH $DC_BUILD_OPTIONS
 
   # Build Dwarf LineInfo Extractor
   $lazbuild tools/extractdwrflnfo.lpi
@@ -57,7 +60,7 @@ build_debug()
   plugins/build.sh
 
   # Build Double Commander
-  $lazbuild src/doublecmd.lpi --bm=debug $DC_ARCH
+  $lazbuild src/doublecmd.lpi --bm=debug $DC_ARCH $DC_BUILD_OPTIONS
 }
 
 
